@@ -1,0 +1,18 @@
+{
+  "name": "ecommerce-microservices",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend/api-gateway",
+    "backend/services/*",
+    "frontend"
+  ],
+  "scripts": {
+    "start:backend": "npx concurrently \"npm run dev --workspace=backend/api-gateway\" \"npm run dev --workspace=backend/services/user\" \"npm run dev --workspace=backend/services/product\" \"npm run dev --workspace=backend/services/inventory\" \"npm run dev --workspace=backend/services/order\" \"npm run dev --workspace=backend/services/payment\" \"npm run dev --workspace=backend/services/notification\"",
+    "start:frontend": "npm run dev --workspace=frontend",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
