@@ -1,3 +1,5 @@
+const otel = require('ecommerce-otel');
+otel.start({ serviceName: 'order-service' });
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -53,6 +55,11 @@ app.post('/create', async (req, res) => {
         }).catch(() => null);
 
         if (!paymentRes || !paymentRes.data.success) {
+            otel.emitLog('WARN', 'Order flow: payment failed, restoring inventory', {
+                userId,
+                productId,
+                quantity: String(quantity),
+            });
             // Rollback inventory if payment fails
             await axios.post(`${INVENTORY_SVC}/add`, { productId, quantity });
             return res.status(400).json({ error: 'Payment failed, inventory restored' });
@@ -68,6 +75,13 @@ app.post('/create', async (req, res) => {
             const message = JSON.stringify({ event: 'order_placed', orderId: order.id, userId, email: userRes.data.email });
             rabbitChannel.sendToQueue('order_notifications', Buffer.from(message));
         }
+
+        otel.emitLog('INFO', 'Order created', {
+            'order.id': order.id,
+            userId,
+            productId,
+            quantity: String(quantity),
+        });
 
         res.status(201).json(order);
 

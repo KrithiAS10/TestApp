@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ShoppingCart, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const GATEWAY_URL = 'http://localhost:3000';
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:3000';
 
 export default function Store() {
   const [products, setProducts] = useState([]);

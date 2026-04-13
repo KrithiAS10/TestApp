@@ -1,0 +1,18 @@
+FROM node:20-bookworm-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json ./
+COPY backend ./backend
+COPY frontend/package.json ./frontend/
+
+RUN npm ci
+
+RUN cd backend/services/user && npx prisma generate \
+  && cd ../product && npx prisma generate \
+  && cd ../order && npx prisma generate
+
+WORKDIR /app

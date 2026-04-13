@@ -4,7 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { UserPlus } from 'lucide-react';
 
-const GATEWAY_URL = 'http://localhost:3000';
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:3000';
 
 export default function Register() {
   const [name, setName] = useState('');

@@ -1,4 +1,9 @@
-version: '3.8'
+x-backend-build: &backend-build
+  context: .
+  dockerfile: Dockerfile.backend
+
+x-otel-env: &otel-env
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
 
 services:
   mongodb:
@@ -9,19 +14,50 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  mongo-init:
+    image: mongo:latest
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: "no"
+    command:
+      - mongosh
+      - mongodb://mongodb:27017
+      - --eval
+      - 'try { rs.status(); } catch (e) { rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "mongodb:27017" }] }); }'
 
   redis:
     image: redis:latest
-    container_name: redis
+    container_name: redis-latest
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: app
+      RABBITMQ_DEFAULT_PASS: app
     ports:
-      - "5672:5672" # AMQP port
-      - "15672:15672" # Management UI
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   jaeger:
     image: jaegertracing/all-in-one:latest
@@ -29,9 +65,142 @@ services:
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
-      - "16686:16686" # UI
-      - "4317:4317" # OTLP gRPC
-      - "4318:4318" # OTLP HTTP
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+
+  user-service:
+    build: *backend-build
+    command: npm run start --workspace=backend/services/user
+    environment:
+      <<: *otel-env
+      PORT: "3001"
+      DATABASE_URL: mongodb://mongodb:27017/userdb?replicaSet=rs0
+      JWT_SECRET: supersecretkey
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+      jaeger:
+        condition: service_started
+
+  product-service:
+    build: *backend-build
+    command: npm run start --workspace=backend/services/product
+    environment:
+      <<: *otel-env
+      PORT: "3002"
+      DATABASE_URL: mongodb://mongodb:27017/productdb?replicaSet=rs0
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+      jaeger:
+        condition: service_started
+
+  inventory-service:
+    build: *backend-build
+    command: npm run start --workspace=backend/services/inventory
+    environment:
+      <<: *otel-env
+      PORT: "3003"
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+      jaeger:
+        condition: service_started
+
+  payment-service:
+    build: *backend-build
+    command: npm run start --workspace=backend/services/payment
+    environment:
+      <<: *otel-env
+      PORT: "3005"
+    depends_on:
+      jaeger:
+        condition: service_started
+
+  order-service:
+    build: *backend-build
+    command: npm run start --workspace=backend/services/order
+    environment:
+      <<: *otel-env
+      PORT: "3004"
+      DATABASE_URL: mongodb://mongodb:27017/orderdb?replicaSet=rs0
+      RABBITMQ_URL: amqp://app:app@rabbitmq:5672
+      USER_SVC_URL: http://user-service:3001
+      INVENTORY_SVC_URL: http://inventory-service:3003
+      PAYMENT_SVC_URL: http://payment-service:3005
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      jaeger:
+        condition: service_started
+
+  notification-service:
+    build: *backend-build
+    command: npm run start --workspace=backend/services/notification
+    environment:
+      <<: *otel-env
+      RABBITMQ_URL: amqp://app:app@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      jaeger:
+        condition: service_started
+
+  api-gateway:
+    build: *backend-build
+    command: npm run start --workspace=backend/api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      <<: *otel-env
+      PORT: "3000"
+      USER_SERVICE_URL: http://user-service:3001
+      PRODUCT_SERVICE_URL: http://product-service:3002
+      INVENTORY_SERVICE_URL: http://inventory-service:3003
+      ORDER_SERVICE_URL: http://order-service:3004
+      PAYMENT_SERVICE_URL: http://payment-service:3005
+    depends_on:
+      user-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      jaeger:
+        condition: service_started
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "5173:5173"
+    environment:
+      # Browser calls the host-mapped gateway; override if you publish differently
+      VITE_GATEWAY_URL: http://localhost:3000
+    depends_on:
+      api-gateway:
+        condition: service_started
 
 volumes:
   mongodb_data:

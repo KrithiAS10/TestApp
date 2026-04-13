@@ -1,3 +1,4 @@
+require('ecommerce-otel').start({ serviceName: 'api-gateway' });
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -9,13 +10,13 @@ const app = express();
 app.use(cors());
 app.use(morgan('dev'));
 
-// Routing configuration
+// Routing configuration (override with *_SERVICE_URL for Docker / k8s)
 const routes = {
-    '/users': 'http://localhost:3001',
-    '/products': 'http://localhost:3002',
-    '/inventory': 'http://localhost:3003',
-    '/orders': 'http://localhost:3004',
-    '/payment': 'http://localhost:3005'
+    '/users': process.env.USER_SERVICE_URL || 'http://localhost:3001',
+    '/products': process.env.PRODUCT_SERVICE_URL || 'http://localhost:3002',
+    '/inventory': process.env.INVENTORY_SERVICE_URL || 'http://localhost:3003',
+    '/orders': process.env.ORDER_SERVICE_URL || 'http://localhost:3004',
+    '/payment': process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005'
 };
 
 for (const [path, target] of Object.entries(routes)) {

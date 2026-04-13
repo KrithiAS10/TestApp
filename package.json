@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
+    "backend/otel",
     "backend/api-gateway",
     "backend/services/*",
     "frontend"

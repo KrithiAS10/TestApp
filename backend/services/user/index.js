@@ -1,3 +1,4 @@
+require('ecommerce-otel').start({ serviceName: 'user-service' });
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');

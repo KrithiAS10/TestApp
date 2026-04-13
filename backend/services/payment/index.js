@@ -1,3 +1,5 @@
+const otel = require('ecommerce-otel');
+otel.start({ serviceName: 'payment-service' });
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -14,10 +16,10 @@ app.post('/process', (req, res) => {
     
     setTimeout(() => {
         if (isSuccess) {
-            console.log(`Payment processed successfully for order ${orderId}, amount: $${amount}`);
+            otel.emitLog('INFO', 'Payment processed', { 'order.id': String(orderId), amount });
             res.json({ success: true, transactionId: `txn_${Math.floor(Math.random() * 1000000)}` });
         } else {
-            console.error(`Payment failed for order ${orderId}, amount: $${amount}`);
+            otel.emitLog('WARN', 'Payment declined by processor', { 'order.id': String(orderId), amount });
             res.status(400).json({ success: false, error: 'Payment declined by processor' });
         }
     }, 1000); // simulate delay

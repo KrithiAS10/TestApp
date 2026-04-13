@@ -1,3 +1,5 @@
+const otel = require('ecommerce-otel');
+otel.start({ serviceName: 'notification-service' });
 require('dotenv').config();
 const amqp = require('amqplib');
 
@@ -14,11 +16,18 @@ async function connectRabbitMQ() {
         channel.consume('order_notifications', (msg) => {
             if (msg !== null) {
                 const data = JSON.parse(msg.content.toString());
-                console.log(`[x] Received notification task:`, data);
-                
+                otel.emitLog('INFO', 'Notification task received', {
+                    event: data.event,
+                    'order.id': String(data.orderId),
+                    'user.id': String(data.userId),
+                });
+
                 // Simulate sending email or SMS notification
                 setTimeout(() => {
-                    console.log(`[x] Notification sent successfully to user ${data.email} for order ${data.orderId}`);
+                    otel.emitLog('INFO', 'Notification sent', {
+                        'order.id': String(data.orderId),
+                        email: data.email,
+                    });
                     channel.ack(msg);
                 }, 1500);
             }

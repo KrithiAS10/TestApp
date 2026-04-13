@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+.git
+.cursor
+mcps
+*.md
+.env
+**/.env
+npm-debug.log*
