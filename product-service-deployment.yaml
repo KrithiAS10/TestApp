@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe convert
+    kompose.version: 1.38.0 (a8f5d1cbd)
+  labels:
+    io.kompose.service: product-service
+  name: product-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: product-service
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe convert
+        kompose.version: 1.38.0 (a8f5d1cbd)
+      labels:
+        io.kompose.service: product-service
+    spec:
+      containers:
+        - args:
+            - npm
+            - run
+            - start
+            - --workspace=backend/services/product
+          env:
+            - name: DATABASE_URL
+              value: mongodb://mongodb:27017/productdb?replicaSet=rs0
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.observability.svc.cluster.local:4318
+            - name: PORT
+              value: "3002"
+          image: product-service
+          imagePullPolicy: Never
+          name: product-service
+      restartPolicy: Always

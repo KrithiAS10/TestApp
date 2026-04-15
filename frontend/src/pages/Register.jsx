@@ -4,7 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { UserPlus } from 'lucide-react';
 
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:3000';
+const GATEWAY_URL = 'http://localhost:3000';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -24,7 +24,14 @@ export default function Register() {
       login({ id: res.data.id, name: res.data.name, email: res.data.email });
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to register. Please check details.');
+      console.log(err);
+      console.log(err.response);
+      setError(
+        err.response?.data?.details ||
+        err.response?.data?.error ||
+        err.message ||
+        'Failed to register'
+      );
     } finally {
       setLoading(false);
     }
@@ -35,15 +42,15 @@ export default function Register() {
       <div className="glass-panel">
         <h2>Create Account</h2>
         <p>Join the NextGen tech revolution</p>
-        
+
         {error && <div className="message-bar msg-error">{error}</div>}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Full Name</label>
-            <input 
-              type="text" 
-              className="form-control" 
+            <input
+              type="text"
+              className="form-control"
               required
               value={name}
               onChange={e => setName(e.target.value)}
@@ -51,9 +58,9 @@ export default function Register() {
           </div>
           <div className="form-group">
             <label>Email Address</label>
-            <input 
-              type="email" 
-              className="form-control" 
+            <input
+              type="email"
+              className="form-control"
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -61,9 +68,9 @@ export default function Register() {
           </div>
           <div className="form-group">
             <label>Password</label>
-            <input 
-              type="password" 
-              className="form-control" 
+            <input
+              type="password"
+              className="form-control"
               required
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -73,7 +80,7 @@ export default function Register() {
             <UserPlus size={18} /> {loading ? 'Creating...' : 'Register'}
           </button>
         </form>
-        
+
         <p style={{ marginTop: '1.5rem', marginBottom: 0, fontSize: '0.875rem' }}>
           Already have an account? <Link to="/login" style={{ color: 'var(--accent-color)', textDecoration: 'none' }}>Login here</Link>
         </p>

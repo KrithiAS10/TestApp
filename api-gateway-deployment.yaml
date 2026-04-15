@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe convert
+    kompose.version: 1.38.0 (a8f5d1cbd)
+  labels:
+    io.kompose.service: api-gateway
+  name: api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: api-gateway
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe convert
+        kompose.version: 1.38.0 (a8f5d1cbd)
+      labels:
+        io.kompose.service: api-gateway
+    spec:
+      containers:
+        - args:
+            - npm
+            - run
+            - start
+            - --workspace=backend/api-gateway
+          env:
+            - name: INVENTORY_SERVICE_URL
+              value: http://inventory-service:3003
+            - name: ORDER_SERVICE_URL
+              value: http://order-service:3004
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.observability.svc.cluster.local:4318
+            - name: PAYMENT_SERVICE_URL
+              value: http://payment-service:3005
+            - name: PORT
+              value: "3000"
+            - name: PRODUCT_SERVICE_URL
+              value: http://product-service:3002
+            - name: USER_SERVICE_URL
+              value: http://user-service:3001
+          image: api-gateway
+          imagePullPolicy: Never
+          name: api-gateway
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+      restartPolicy: Always
