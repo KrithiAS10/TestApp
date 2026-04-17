@@ -30,7 +30,7 @@ spec:
             - name: DATABASE_URL
               value: mongodb://mongodb:27017/productdb?replicaSet=rs0
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://otel-collector.observability.svc.cluster.local:4318
+              value: http://jaeger:4318
             - name: PORT
               value: "3002"
           image: product-service

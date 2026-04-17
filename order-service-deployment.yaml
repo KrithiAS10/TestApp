@@ -32,7 +32,7 @@ spec:
             - name: INVENTORY_SVC_URL
               value: http://inventory-service:3003
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://otel-collector.observability.svc.cluster.local:4318
+              value: http://jaeger:4318
             - name: PAYMENT_SVC_URL
               value: http://payment-service:3005
             - name: PORT

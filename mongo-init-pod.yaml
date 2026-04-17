@@ -15,5 +15,6 @@ spec:
         - --eval
         - 'try { rs.status(); } catch (e) { rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "mongodb:27017" }] }); }'
       image: mongo:latest
+      imagePullPolicy: IfNotPresent
       name: mongo-init
   restartPolicy: Never

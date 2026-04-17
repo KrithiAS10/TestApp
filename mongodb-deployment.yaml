@@ -28,6 +28,7 @@ spec:
             - rs0
             - --bind_ip_all
           image: mongo:latest
+          imagePullPolicy: IfNotPresent
           livenessProbe:
             exec:
               command:

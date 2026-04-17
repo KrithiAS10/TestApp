@@ -28,7 +28,7 @@ spec:
             - --workspace=backend/services/notification
           env:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://otel-collector.observability.svc.cluster.local:4318
+              value: http://jaeger:4318
             - name: RABBITMQ_URL
               value: amqp://app:app@rabbitmq:5672
           image: notification-service

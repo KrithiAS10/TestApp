@@ -27,6 +27,7 @@ spec:
             - name: RABBITMQ_DEFAULT_USER
               value: app
           image: rabbitmq:3-management
+          imagePullPolicy: IfNotPresent
           livenessProbe:
             exec:
               command:

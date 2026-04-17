@@ -25,6 +25,7 @@ spec:
             - name: COLLECTOR_OTLP_ENABLED
               value: "true"
           image: jaegertracing/all-in-one:latest
+          imagePullPolicy: IfNotPresent
           name: jaeger
           ports:
             - containerPort: 16686

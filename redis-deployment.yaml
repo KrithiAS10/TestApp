@@ -22,6 +22,7 @@ spec:
     spec:
       containers:
         - image: redis:latest
+          imagePullPolicy: IfNotPresent
           livenessProbe:
             exec:
               command:

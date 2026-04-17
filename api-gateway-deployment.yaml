@@ -32,7 +32,7 @@ spec:
             - name: ORDER_SERVICE_URL
               value: http://order-service:3004
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://otel-collector.observability.svc.cluster.local:4318
+              value: http://jaeger:4318
             - name: PAYMENT_SERVICE_URL
               value: http://payment-service:3005
             - name: PORT
